@@ -6,6 +6,7 @@ import shlex
 import subprocess
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
 
 from .csv_repository import CsvRepository
 from .errors import ShellexError
@@ -65,18 +66,19 @@ def edit_notes(path):
     try:
         editor = shlex.split(value)
     except ValueError as exc:
-        raise ShellexError("Invalid editor setting: {}".format(exc))
+        raise ShellexError(f"Invalid editor setting: {exc}")
     if not editor:
         raise ShellexError("Editor setting is empty.")
     try:
         result = subprocess.run(editor + [str(path)], check=False)
     except OSError as exc:
-        raise ShellexError("Could not start editor: {}".format(exc))
+        raise ShellexError(f"Could not start editor: {exc}")
     if result.returncode:
-        raise ShellexError("Editor exited with status {}.".format(result.returncode))
+        raise ShellexError(f"Editor exited with status {result.returncode}.")
 
 
 def main(argv=None):
+    load_dotenv()
     args = parser().parse_args(argv)
     view = Presentation()
     service = ShellexService(CsvRepository(args.data_dir))
@@ -85,7 +87,7 @@ def main(argv=None):
             view.groups(service.list_groups())
         elif args.action == "new":
             service.create_group(args.group)
-            view.console.print("Created group {}.".format(args.group), style="green")
+            view.console.print(f"Created group {args.group}.", style="green")
         elif args.action == "examples":
             view.examples(service.examples(args.group))
         elif args.action == "add":
@@ -118,5 +120,5 @@ def main(argv=None):
                 view.notes(content, service.notes_path(args.group).suffix == ".md")
         return 0
     except (ShellexError, OSError) as exc:
-        view.error.print("Error: {}".format(exc), style="bold red")
+        view.error.print(f"Error: {exc}", style="bold red")
         return 1
