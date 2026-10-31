@@ -1,0 +1,17 @@
+[project]
+name = "shellex"
+version = "0.1.0"
+description = "Organise shell command examples and notes"
+readme = "README.md"
+authors = [
+    { name = "Kyle Marden", email = "demolaze@Mac.home" }
+]
+requires-python = ">=3.9"
+dependencies = ["rich>=13,<16"]
+
+[project.scripts]
+shellex = "shellex:main"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
