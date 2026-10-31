@@ -9,11 +9,15 @@ from rich.text import Text
 
 
 class Presentation:
+    """Render CLI results and errors using terminal-aware Rich consoles."""
+
     def __init__(self):
+        """Create separate consoles for normal output and errors."""
         self.console = Console(highlight=False)
         self.error = Console(stderr=True, highlight=False)
 
     def groups(self, groups):
+        """Display the available groups and their example counts."""
         if not groups:
             self.console.print("No groups found. Create one with shellex new GROUP.")
             return
@@ -23,6 +27,7 @@ class Presentation:
         self.console.print(table)
 
     def examples(self, examples, start=1):
+        """Display examples with their current one-based row numbers."""
         if not examples:
             self.console.print("No examples yet.")
             return
@@ -32,6 +37,7 @@ class Presentation:
         self.console.print(table)
 
     def notes(self, content, markdown):
+        """Render Markdown on a terminal and preserve raw redirected output."""
         if not content:
             self.console.print("No notes yet.")
         elif self.console.is_terminal and markdown:

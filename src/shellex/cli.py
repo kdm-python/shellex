@@ -15,6 +15,7 @@ from .service import ShellexService
 
 
 def parser():
+    """Build the CLI grammar, including the current environment defaults."""
     p = argparse.ArgumentParser(
         prog="shellex", description="Organise shell command examples and notes."
     )
@@ -62,7 +63,9 @@ def parser():
 
 
 def edit_notes(path):
+    """Open a notes file with the configured editor and wait for it to exit."""
     value = os.environ.get("VISUAL") or os.environ.get("EDITOR") or "vi"
+    # Split editor arguments without invoking a shell or interpreting the path.
     try:
         editor = shlex.split(value)
     except ValueError as exc:
@@ -78,6 +81,8 @@ def edit_notes(path):
 
 
 def main(argv=None):
+    """Load configuration, dispatch a CLI operation, and return its exit status."""
+    # Existing environment variables take precedence over values in .env.
     load_dotenv()
     args = parser().parse_args(argv)
     view = Presentation()

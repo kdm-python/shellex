@@ -4,9 +4,15 @@ Shellex keeps shell command examples and notes in editable files, organised into
 
 ## Install
 
-Requires Python 3.9 or newer. From the project directory, install with `pip install .` (or `uv tool install .` to install the CLI as a tool). Then run `shellex --help`. For development, use `pip install -e .`.
+Requires [uv](https://docs.astral.sh/uv/) and Python 3.9 or newer. From the project directory, run `uv sync` to create and install the locked project environment. Run the CLI with `uv run shellex --help`; uv also syncs the environment automatically when needed. To install a standalone `shellex` command on your PATH, use `uv tool install .` instead.
 
 ## Usage
+
+```sh
+uv run shellex --help
+```
+
+The examples below use the standalone `shellex` command. If working from the project without a tool installation, prefix each command with `uv run`.
 
 ```sh
 shellex list
@@ -46,6 +52,8 @@ Set `SHELLEX_DIR` to change the default location, or pass `--data-dir` before th
 shellex --data-dir tests/examples list
 ```
 
+Shellex loads settings from `.env` via python-dotenv, without overriding variables already set in the environment. Copy `.env.example` to `.env` for a local starting point; `.env` is ignored by Git.
+
 Group names start with a letter, number or underscore and may contain letters, numbers, underscores, hyphens and dots. Shellex writes CSV changes via a temporary file and checks for external changes before replacing the original. Avoid editing a CSV simultaneously in multiple programs: this check cannot eliminate every race between concurrent writers.
 
 Colour is disabled for redirected output and when `NO_COLOR` is set. Use `shellex COMMAND --help` for command-specific help.
@@ -53,5 +61,5 @@ Colour is disabled for redirected output and when `NO_COLOR` is set. Use `shelle
 ## Tests
 
 ```sh
-python -m unittest discover -s tests
+uv run python -m unittest discover -s tests
 ```

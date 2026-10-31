@@ -7,7 +7,10 @@ authors = [
     { name = "Kyle Marden", email = "demolaze@Mac.home" }
 ]
 requires-python = ">=3.9"
-dependencies = ["rich>=13,<16"]
+dependencies = [
+    "python-dotenv>=1.2.1",
+    "rich>=13,<16",
+]
 
 [project.scripts]
 shellex = "shellex:main"

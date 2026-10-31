@@ -11,16 +11,21 @@ from .models import Example
 
 
 class CsvRepository:
+    """Store each group in a directory containing CSV examples and notes."""
+
     def __init__(self, root: Path):
+        """Use root as the collection directory, expanding a leading tilde."""
         self.root = root.expanduser()
 
     def _group(self, name: str) -> Path:
+        """Resolve an existing group without following group symlinks."""
         path = self.root / name
         if not path.is_dir() or path.is_symlink():
             raise ShellexError(f"Group {name!r} does not exist.")
         return path
 
     def list_names(self) -> list[str]:
+        """Return group directory names in a predictable order."""
         if not self.root.exists():
             return []
         if not self.root.is_dir():
@@ -30,6 +35,7 @@ class CsvRepository:
         )
 
     def create_group(self, name: str) -> None:
+        """Create a group with a CSV header and an empty Markdown file."""
         self.root.mkdir(parents=True, exist_ok=True)
         group = self.root / name
         try:
@@ -55,6 +61,7 @@ class CsvRepository:
             raise
 
     def read_examples(self, name: str) -> tuple[list[Example], bytes]:
+        """Parse examples and return the original bytes for change detection."""
         path = self._group(name) / (name + ".csv")
         try:
             raw = path.read_bytes()
@@ -85,6 +92,7 @@ class CsvRepository:
     def write_examples(
         self, name: str, examples: list[Example], original: bytes
     ) -> None:
+        """Replace the CSV after checking it still matches the original bytes."""
         path = self._group(name) / (name + ".csv")
         output = io.StringIO(newline="")
         writer = csv.writer(output, lineterminator="\n")
@@ -106,6 +114,7 @@ class CsvRepository:
                 os.fsync(handle.fileno())
             # Preserve file permissions when replacing a manually edited file.
             os.chmod(tmp, path.stat().st_mode & 0o777)
+            # This detects many external edits, though it is not a file lock.
             if path.read_bytes() != original:
                 raise ShellexError("Examples changed on disk; reload and try again.")
             os.replace(str(tmp), str(path))
@@ -114,6 +123,7 @@ class CsvRepository:
                 tmp.unlink()
 
     def notes_path(self, name: str) -> Path:
+        """Prefer Markdown notes, falling back to legacy plain-text notes."""
         group = self._group(name)
         markdown = group / (name + ".md")
         legacy = group / (name + ".txt")
@@ -124,6 +134,7 @@ class CsvRepository:
         raise ShellexError(f"Notes file is missing for group {name!r}.")
 
     def read_notes(self, name: str) -> str:
+        """Read the group notes as UTF-8 text."""
         path = self.notes_path(name)
         try:
             return path.read_text(encoding="utf-8")
