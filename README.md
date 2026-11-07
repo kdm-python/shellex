@@ -20,6 +20,10 @@ shellex new journalctl
 shellex add journalctl --command 'journalctl -xe' --description 'Recent messages'
 shellex add journalctl --command 'journalctl -u ssh | grep "Failed"'
 shellex examples journalctl
+shellex search journalctl 'recent'
+shellex search journalctl 'journalctl' --field command
+shellex search journalctl 'messages' --field description
+shellex copy journalctl 1
 shellex update journalctl 1 --description 'Recent messages with context'
 shellex update journalctl 1 --description ''  # Clear the description
 shellex delete journalctl 1
@@ -29,6 +33,8 @@ shellex notes journalctl --edit
 ```
 
 Example numbers start at 1 and reflect the current CSV order. They are not persistent IDs: check `examples` again after rows are added, removed or reordered. Delete shows the selected example and asks for confirmation. In scripts, use `--yes`.
+
+Search matches substrings without regard to case, in both fields by default. Results retain their original row numbers for use with `copy`, `update` or `delete`. Copy places the exact command text on the system clipboard without executing it. It uses `pbcopy` on macOS, `clip.exe` on Windows, or `wl-copy`, `xclip` or `xsel` in a suitable Linux graphical session; install the relevant clipboard tool if needed.
 
 A group name such as `sudo` does not require quotes simply because it is also a command. Quote command text so your shell passes it literally instead of interpreting pipes, redirects, variables or substitutions. In bash and zsh, single quotes are usually useful; to include a literal single quote, one option is `--command 'echo '\''hello'\'''`. Quoting rules vary by shell.
 

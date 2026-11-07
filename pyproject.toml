@@ -3,14 +3,9 @@ name = "shellex"
 version = "0.1.0"
 description = "Organise shell command examples and notes"
 readme = "README.md"
-authors = [
-    { name = "Kyle Marden", email = "demolaze@Mac.home" }
-]
-requires-python = ">=3.9"
-dependencies = [
-    "python-dotenv>=1.2.1",
-    "rich>=13,<16",
-]
+authors = [{ name = "Kyle Marden", email = "kyle.marden@yahoo.co.uk" }]
+requires-python = ">=3.13"
+dependencies = ["dotenv>=0.9.9", "python-dotenv>=1.2.1", "rich>=13,<16"]
 
 [project.scripts]
 shellex = "shellex:main"

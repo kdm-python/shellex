@@ -6,6 +6,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from shellex.clipboard import copy_text
+from shellex.cli import main
 from shellex.csv_repository import CsvRepository
 from shellex.errors import ShellexError
 from shellex.models import Example
@@ -84,6 +86,43 @@ class StorageTests(unittest.TestCase):
         with self.assertRaises(ShellexError):
             self.service.delete("journalctl", 1, selected)
 
+    def test_search_fields_and_original_numbers(self):
+        self.service.add("journalctl", "echo unrelated", "first")
+        self.service.add("journalctl", "journalctl --since today", "View logs")
+        self.service.add("journalctl", "VIEW status", "other")
+        self.assertEqual([n for n, _ in self.service.search("journalctl", "view")], [2, 3])
+        self.assertEqual([n for n, _ in self.service.search("journalctl", "view", "command")], [3])
+        self.assertEqual([n for n, _ in self.service.search("journalctl", "VIEW", "description")], [2])
+        self.assertEqual(self.service.search("journalctl", "not found"), [])
+        with self.assertRaises(ShellexError):
+            self.service.search("journalctl", "")
+
+
+class ClipboardTests(unittest.TestCase):
+    @patch("shellex.clipboard.sys.platform", "darwin")
+    @patch("shellex.clipboard.shutil.which", return_value="/usr/bin/pbcopy")
+    @patch("shellex.clipboard.subprocess.run")
+    def test_copies_exact_utf8_text(self, run, which):
+        run.return_value.returncode = 0
+        copy_text("echo 世界\nnext")
+        self.assertEqual(run.call_args.kwargs["input"], "echo 世界\nnext".encode())
+        self.assertEqual(run.call_args.args[0], ["/usr/bin/pbcopy"])
+
+    @patch("shellex.clipboard.sys.platform", "darwin")
+    @patch("shellex.clipboard.shutil.which", return_value=None)
+    def test_missing_clipboard_tool(self, which):
+        with self.assertRaisesRegex(ShellexError, "No clipboard tool"):
+            copy_text("example")
+
+    @patch("shellex.clipboard.sys.platform", "darwin")
+    @patch("shellex.clipboard.shutil.which", return_value="/usr/bin/pbcopy")
+    @patch("shellex.clipboard.subprocess.run")
+    def test_clipboard_failure(self, run, which):
+        run.return_value.returncode = 1
+        run.return_value.stderr = b"clipboard unavailable"
+        with self.assertRaisesRegex(ShellexError, "clipboard unavailable"):
+            copy_text("example")
+
 
 class CliTests(unittest.TestCase):
     def setUp(self):
@@ -134,6 +173,26 @@ class CliTests(unittest.TestCase):
         result = self.run_cli("notes", "sudo", "--edit")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Could not start editor", result.stderr)
+
+    def test_search_cli_shows_original_row(self):
+        self.run_cli("new", "sudo")
+        self.run_cli("add", "sudo", "--command", "echo other")
+        self.run_cli("add", "sudo", "--command", "echo hello", "--description", "View message")
+        result = self.run_cli("search", "sudo", "VIEW", "--field", "description")
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("│ 2", result.stdout)
+        self.assertIn("echo hello", result.stdout)
+        self.assertNotIn("echo other", result.stdout)
+        self.assertIn("No matching examples", self.run_cli("search", "sudo", "missing").stdout)
+        self.assertNotEqual(self.run_cli("copy", "sudo", "3").returncode, 0)
+
+    @patch("shellex.cli.copy_text")
+    def test_copy_cli_passes_selected_command(self, copy):
+        self.run_cli("new", "sudo")
+        self.run_cli("add", "sudo", "--command", "first")
+        self.run_cli("add", "sudo", "--command", "echo 'second' | cat")
+        self.assertEqual(main(["--data-dir", str(self.root), "copy", "sudo", "2"]), 0)
+        copy.assert_called_once_with("echo 'second' | cat")
 
 
 if __name__ == "__main__":

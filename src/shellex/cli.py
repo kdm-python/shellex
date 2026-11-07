@@ -6,8 +6,10 @@ import shlex
 import subprocess
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
+from .clipboard import copy_text
 from .csv_repository import CsvRepository
 from .errors import ShellexError
 from .presentation import Presentation
@@ -31,6 +33,18 @@ def parser():
     new.add_argument("group")
     examples = commands.add_parser("examples", help="show numbered examples")
     examples.add_argument("group")
+    search = commands.add_parser("search", help="search command text and descriptions")
+    search.add_argument("group")
+    search.add_argument("query", help="case-insensitive substring to find")
+    search.add_argument(
+        "--field",
+        choices=("both", "command", "description"),
+        default="both",
+        help="field to search (default: both)",
+    )
+    copy = commands.add_parser("copy", help="copy an example command to the clipboard")
+    copy.add_argument("group")
+    copy.add_argument("row", type=int, help="current example row number")
     add = commands.add_parser("add", help="add an example")
     add.add_argument("group")
     add.add_argument(
@@ -95,6 +109,15 @@ def main(argv=None):
             view.console.print(f"Created group {args.group}.", style="green")
         elif args.action == "examples":
             view.examples(service.examples(args.group))
+        elif args.action == "search":
+            matches = service.search(args.group, args.query, args.field)
+            if matches:
+                view.numbered_examples(matches)
+            else:
+                view.console.print("No matching examples.")
+        elif args.action == "copy":
+            copy_text(service.select(args.group, args.row).command)
+            view.console.print("Command copied to clipboard.", style="green")
         elif args.action == "add":
             service.add(args.group, args.command, args.description)
             view.console.print("Example added.", style="green")

@@ -31,8 +31,12 @@ class Presentation:
         if not examples:
             self.console.print("No examples yet.")
             return
+        self.numbered_examples(enumerate(examples, start))
+
+    def numbered_examples(self, examples):
+        """Display explicitly numbered examples, such as filtered search results."""
         table = Table("#", "Command", "Description", header_style="bold cyan")
-        for number, example in enumerate(examples, start):
+        for number, example in examples:
             table.add_row(str(number), Text(example.command), Text(example.description))
         self.console.print(table)
 

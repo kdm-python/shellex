@@ -58,6 +58,20 @@ class ShellexService:
         self.validate_name(name)
         return self.repository.read_examples(name)[0]
 
+    def search(self, name: str, query: str, field: str = "both") -> list[tuple[int, Example]]:
+        """Find case-insensitive substrings while preserving original row numbers."""
+        if not query:
+            raise ShellexError("Search text must not be empty.")
+        if field not in ("both", "command", "description"):
+            raise ShellexError("Invalid search field.")
+        needle = query.casefold()
+        return [
+            (row, example)
+            for row, example in enumerate(self.examples(name), 1)
+            if (field in ("both", "command") and needle in example.command.casefold())
+            or (field in ("both", "description") and needle in example.description.casefold())
+        ]
+
     @staticmethod
     def _index(row: int, examples: list[Example]) -> int:
         """Convert a user-facing row number into a validated list index."""
